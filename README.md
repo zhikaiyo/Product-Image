@@ -1,20 +1,53 @@
-<div align="center">
-<img width="1200" height="475" alt="GHBanner" src="https://github.com/user-attachments/assets/0aa67016-6eaf-458a-adb2-6e31a0763ed6" />
-</div>
+# ProductMorph AI 📸
 
-# Run and deploy your AI Studio app
+ProductMorph AI 是一款專為電商與廣告行銷設計的 AI 工具，利用 Google Gemini API 自動為您的產品照片進行「去背」並「合成」至專業的商業場景中。
 
-This contains everything you need to run your app locally.
+## ✨ 特色功能
+- **自動去背**：精準辨識產品主體並移除背景。
+- **多樣化場景**：內建質感工作室、大理石奢華、大自然、都市潮流、清新夏日等多種預設風格。
+- **自定義描述**：支援透過文字描述生成專屬的品牌氛圍。
+- **專業修飾詞**：一鍵加入「電影級光影」、「背景虛化」等細節強化指令。
 
-View your app in AI Studio: https://ai.studio/apps/9d3c9010-e203-4fd6-bf0f-eb20103e322f
+## 🚀 快速開始
 
-## Run Locally
+### 1. 環境需求
+- [Node.js](https://nodejs.org/) (建議 v18 以上)
+- [NPM](https://www.npmjs.com/) 或 [Yarn](https://yarnpkg.com/)
 
-**Prerequisites:**  Node.js
+### 2. 安裝步驟
+```bash
+# 複製專案
+git clone <your-repo-url>
+cd Product-Image
 
+# 安裝套件
+npm install
+```
 
-1. Install dependencies:
-   `npm install`
-2. Set the `GEMINI_API_KEY` in [.env.local](.env.local) to your Gemini API key
-3. Run the app:
-   `npm run dev`
+### 3. 設定環境變數
+在專案根目錄建立 `.env` 檔案，並填入您的 Gemini API Key：
+```env
+GEMINI_API_KEY=你的_GEMINI_API_KEY
+```
+
+### 4. 啟動開發伺服器
+```bash
+npm run dev
+```
+啟動後請訪問 `http://localhost:3000`。
+
+## 📦 部署
+
+專案已設定好 GitHub Actions，當您推送至 `main` 分支時，會自動部署至 GitHub Pages。
+
+您也可以手動部署：
+```bash
+npm run deploy
+```
+
+## 🛠️ 技術棧
+- **Frontend**: React 19, TypeScript, Vite
+- **Styling**: Tailwind CSS
+- **Animation**: Motion
+- **AI Engine**: Google Gemini API (@google/genai)
+- **Icons**: Lucide React

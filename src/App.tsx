@@ -75,51 +75,75 @@ export default function App() {
     setIsProcessing(true);
     setError(null);
 
-    try {
-      const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
-      const style = selectedStyleId === "custom" 
-        ? `Identify the main product. Remove its current background and place it in a setting described as: ${customStyle}. Professional marketing aesthetic.`
-        : PRESET_STYLES.find(s => s.id === selectedStyleId)?.prompt;
+    // 2026 年建議的備選模型清單
+    const modelsToTry = ["gemini-3.1-flash-lite", "gemini-2.0-flash-lite", "gemini-2.5-flash"];
+    let lastError: any = null;
 
-      const base64Data = selectedImage.split(",")[1];
-      const mimeType = selectedImage.split(";")[0].split(":")[1];
+    for (const modelName of modelsToTry) {
+      try {
+        console.log(`Trying model: ${modelName}...`);
+        const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
+        const style = selectedStyleId === "custom" 
+          ? `A professional marketing photo. Place the product in a setting described as: ${customStyle}.`
+          : PRESET_STYLES.find(s => s.id === selectedStyleId)?.prompt;
 
-      const response = await ai.models.generateContent({
-        model: "gemini-2.5-flash-image",
-        contents: {
-          parts: [
-            {
-              inlineData: {
-                data: base64Data,
-                mimeType: mimeType,
+        const base64Data = selectedImage.split(",")[1];
+        const mimeType = selectedImage.split(";")[0].split(":")[1];
+
+        const response = await ai.models.generateContent({
+          model: modelName, 
+          contents: {
+            parts: [
+              {
+                inlineData: {
+                  data: base64Data,
+                  mimeType: mimeType,
+                },
               },
-            },
-            {
-              text: `${style}. Ensure the lighting on the product matches the background. Ensure the shadow placement is realistic. Professional marketing high resolution.`,
-            },
-          ],
-        },
-      });
+              {
+                text: `TASK: Background Replacement.
+1. Identify the main product in this image.
+2. KEEP the product's original appearance, colors, and textures exactly as they are.
+3. REMOVE everything else (the current background).
+4. GENERATE a new background based on this style: "${style}".
+5. Ensure the product lighting and shadows blend naturally with the new environment.
+6. OUTPUT the final merged image directly as an image part.`,
+              },
+            ],
+          },
+        });
 
-      let foundImage = false;
-      for (const part of response.candidates[0].content.parts) {
-        if (part.inlineData) {
-          setTransformedImage(`data:image/png;base64,${part.inlineData.data}`);
-          foundImage = true;
-          break;
+        let foundImage = false;
+        if (response.candidates?.[0]?.content?.parts) {
+          for (const part of response.candidates[0].content.parts) {
+            if (part.inlineData) {
+              setTransformedImage(`data:image/png;base64,${part.inlineData.data}`);
+              foundImage = true;
+              break;
+            }
+          }
         }
-      }
 
-      if (!foundImage) {
-        throw new Error("Model did not return an image.");
-      }
+        if (foundImage) {
+          console.log(`Successfully used model: ${modelName}`);
+          setIsProcessing(false);
+          return; // 成功後直接結束
+        }
 
-    } catch (err) {
-      console.error(err);
-      setError("轉換失敗，請確保圖片中有明顯的主體產品。");
-    } finally {
-      setIsProcessing(false);
+        const textReason = response.candidates?.[0]?.content?.parts?.[0]?.text;
+        throw new Error(textReason || "Model failed to return image data.");
+
+      } catch (err: any) {
+        console.warn(`Model ${modelName} failed:`, err);
+        lastError = err;
+        // 如果是 429 或 404，迴圈會繼續嘗試下一個模型
+      }
     }
+
+    // 如果所有模型都嘗試失敗
+    console.error("All models failed:", lastError);
+    setError(lastError?.message || "轉換失敗，請確認 API Key 權限或稍後再試。");
+    setIsProcessing(false);
   };
 
   const downloadImage = () => {
